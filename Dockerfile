@@ -1,20 +1,30 @@
-# Use Python 3.10 image as the base
-FROM python:3.10-slim
+# Base image
+FROM ubuntu:20.04
 
-# Set the working directory inside the container
+# Install Python and required packages
+RUN apt-get update && \
+    apt-get install -y python3.10 python3-pip wget unzip && \
+    apt-get clean
+
+# Install MetaTrader5 Terminal
+RUN wget -O mt5.zip "https://download.mql5.com/cdn/web/metaquotes.software.corp/metaeditor5setup.exe" && \
+    unzip mt5.zip -d /opt/mt5 && \
+    rm mt5.zip
+
+# Set environment variables for MetaTrader
+ENV PATH="/opt/mt5:${PATH}"
+
+# Set working directory
 WORKDIR /app
 
-# Copy only the requirements file to the container
-COPY requirements.txt requirements.txt
-
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy the rest of the application code to the container
+# Copy application files
 COPY . .
 
-# Expose the port for Streamlit (default is 8501)
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Expose Streamlit default port
 EXPOSE 8501
 
-# Run the Streamlit application
+# Start Streamlit
 CMD ["streamlit", "run", "spread_monitor.py", "--server.port=8501", "--server.address=0.0.0.0"]
